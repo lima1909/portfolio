@@ -1,3 +1,7 @@
+mod dotenv;
+
+use dotenv::Dotenv;
+
 fn main() {
-    println!("Hello, world!");
+    Dotenv::new().load();
 }
