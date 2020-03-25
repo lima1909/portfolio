@@ -1,3 +1,4 @@
+use log::info;
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
@@ -24,7 +25,7 @@ impl Dotenv {
                     if let Ok(line) = l {
                         let kv: Vec<&str> = line.split('=').collect();
                         self.store.insert(kv[0].to_string(), kv[1].to_string());
-                        println!("rows: {} -> {}", kv[0], kv[1]);
+                        info!("rows: {} -> {}", kv[0], kv[1]);
                     }
                 })
             }
