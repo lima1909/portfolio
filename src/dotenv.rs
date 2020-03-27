@@ -1,10 +1,11 @@
-use log::info;
+use log::{debug, error};
 use std::collections::HashMap;
 use std::fs::{File, OpenOptions};
 use std::io::prelude::*;
 use std::io::{BufRead, BufReader, Result};
 
-const DEFAULT_FILE: &str = ".env";
+const DEFAULT_FILE: &'static str = ".env";
+pub const KEY_JWT_TOKEN: &'static str = "jwt_token";
 
 pub struct Dotenv {
     store: HashMap<String, String>,
@@ -24,12 +25,12 @@ impl Dotenv {
                     if let Ok(line) = l {
                         let kv: Vec<&str> = line.split('=').collect();
                         dotenv.store.insert(kv[0].to_string(), kv[1].to_string());
-                        info!("rows: {} -> {}", kv[0], kv[1]);
+                        debug!("loaded row with key and value: {} -> {}", kv[0], kv[1]);
                     }
                 })
             }
             Err(msg) => {
-                println!("could not open file '{}': {}", DEFAULT_FILE, msg);
+                error!("could not open file '{}': {}", DEFAULT_FILE, msg);
             }
         };
         dotenv
