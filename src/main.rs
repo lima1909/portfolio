@@ -6,5 +6,5 @@ use dotenv::Dotenv;
 fn main() {
     logging::init();
 
-    Dotenv::new().load();
+    Dotenv::new();
 }

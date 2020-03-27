@@ -1,7 +1,8 @@
 use log::info;
 use std::collections::HashMap;
-use std::fs::File;
-use std::io::{BufRead, BufReader};
+use std::fs::{File, OpenOptions};
+use std::io::prelude::*;
+use std::io::{BufRead, BufReader, Result};
 
 const DEFAULT_FILE: &str = ".env";
 
@@ -12,28 +13,39 @@ pub struct Dotenv {
 #[allow(dead_code)]
 impl Dotenv {
     pub fn new() -> Dotenv {
-        Dotenv {
+        let mut dotenv = Dotenv {
             store: HashMap::new(),
-        }
-    }
+        };
 
-    pub fn load(&mut self) {
         match File::open(DEFAULT_FILE) {
             Ok(file) => {
-                let buf = BufReader::new(file).lines();
-                buf.for_each(|l| {
+                let reader = BufReader::new(file);
+                reader.lines().for_each(|l| {
                     if let Ok(line) = l {
                         let kv: Vec<&str> = line.split('=').collect();
-                        self.store.insert(kv[0].to_string(), kv[1].to_string());
+                        dotenv.store.insert(kv[0].to_string(), kv[1].to_string());
                         info!("rows: {} -> {}", kv[0], kv[1]);
                     }
                 })
             }
             Err(msg) => {
                 println!("could not open file '{}': {}", DEFAULT_FILE, msg);
-                return;
             }
+        };
+        dotenv
+    }
+
+    pub fn write_to_file(&self) -> Result<()> {
+        let mut file = OpenOptions::new().write(true).open(DEFAULT_FILE)?;
+        let mut content = String::new();
+        for (k, v) in &self.store {
+            content.push_str(k);
+            content.push_str("=");
+            content.push_str(v);
+            content.push_str("\n");
         }
+        file.write_all(content.as_bytes())?;
+        Ok(())
     }
 
     pub fn put(&mut self, k: String, v: String) {
@@ -44,11 +56,11 @@ impl Dotenv {
         self.store.get(k)
     }
 
-    pub fn get_as_bytes(&self, k: &String) -> &[u8] {
-        match self.store.get(k) {
-            Some(v) => return v.as_bytes(),
-            None => return "".as_bytes(),
+    pub fn get_as_bytes(&self, k: &String) -> Option<&[u8]> {
+        if let Some(v) = self.get(k) {
+            return Some(v.as_bytes());
         };
+        None
     }
 }
 
@@ -59,11 +71,11 @@ mod tests {
     #[test]
     fn test_get_dotenv_values() {
         let mut d = Dotenv::new();
-        assert_eq!("".as_bytes(), d.get_as_bytes(&"blub".to_string()));
+        assert_eq!(None, d.get_as_bytes(&"blub".to_string()));
 
         d.put("foo".to_string(), "bar".to_string());
-        assert_eq!("bar".as_bytes(), d.get_as_bytes(&"foo".to_string()));
-        assert_eq!("".as_bytes(), d.get_as_bytes(&"not found".to_string()));
+        assert_eq!(Some("bar".as_bytes()), d.get_as_bytes(&"foo".to_string()));
+        assert_eq!(None, d.get_as_bytes(&"not found".to_string()));
 
         assert_eq!(Some(&"bar".to_string()), d.get(&"foo".to_string()));
         assert_eq!(None, d.get(&"not found".to_string()));
