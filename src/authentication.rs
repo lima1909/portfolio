@@ -12,6 +12,10 @@ const URL_AUTH: &'static str = "https://oauth2.googleapis.com/token";
 // exp	The expiration time of the assertion, specified as seconds since 00:00:00 UTC, January 1, 1970. This value has a maximum of 1 hour after the issued time.
 // iat	The time the assertion was issued, specified as seconds since 00:00:00 UTC, January 1, 1970.
 
+// privs bucket: https://cloud.google.com/storage/docs/authentication?hl=de
+// e.g.read-only, read-write, full-control
+//
+
 #[derive(Debug, PartialEq, Deserialize, Serialize)]
 pub struct Claim {
     iss: String,   // client_email
@@ -25,7 +29,7 @@ impl Claim {
     pub fn new() -> Claim {
         Claim {
             iss: "bucket@goheros-207118.iam.gserviceaccount.com".to_string(),
-            scope: "https://www.googleapis.com/auth/devstorage.read_only".to_string(),
+            scope: "https://www.googleapis.com/auth/devstorage.read_only https://www.googleapis.com/auth/datastore".to_string(),
             aud: URL_AUTH.to_string(),
             iat: Utc::now().timestamp(),
             exp: Utc::now().timestamp() + chrono::Duration::minutes(1).num_seconds(),

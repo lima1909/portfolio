@@ -12,7 +12,17 @@ Content-Type: application/x-www-form-urlencoded
 
 grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Ajwt-bearer&assertion={{jwt}}
 
+# set the token from request into a variable
 @token = {{jwt_login.response.body.access_token}}
+
+
+# revoke / invalidate the token
+###
+GET https://oauth2.googleapis.com/revoke?token={{token}}
+Content-type: application/x-www-form-urlencoded
+
+
+# bucket read calls
 ###
 GET https://storage.googleapis.com/storage/v1/b/goheros-207118.appspot.com?access_token={{token}}
 
@@ -22,3 +32,56 @@ GET https://storage.googleapis.com/storage/v1/b/goheros-207118.appspot.com/o/gop
 ###
 GET https://storage.googleapis.com/storage/v1/b/goheros-207118.appspot.com/o?fields=kind,items(id,name)&access_token={{token}}
 
+
+
+# datastore
+# https://cloud.google.com/datastore/docs/reference/data/rest
+###
+POST https://datastore.googleapis.com/v1/projects/goheros-207118:lookup?access_token={{token}}
+
+{
+  "readOptions": {
+    "readConsistency": "EVENTUAL"
+  },
+  "keys": [
+    {
+      "partitionId": {
+        "namespaceId": "heroes"
+      },
+      "path": [
+        {
+          "kind": "Protocol",
+          "id": "4851027920551936"
+        },
+      ]
+    },
+  ]
+}
+
+###
+POST https://datastore.googleapis.com/v1/projects/goheros-207118:runQuery?access_token={{token}}
+
+{
+  "partitionId": {
+    "namespaceId": "heroes"
+  },
+  "readOptions": {
+    "readConsistency": "EVENTUAL"
+  },
+  "query": {
+    "kind": {
+      "name": "Protocol",
+    },
+    "filter": {
+      "propertyFilter": {
+          "property": {
+            "name": "Action",
+          },
+          "op" : "EQUAL",
+          "value": {
+            "stringValue":"List",
+          },
+      }
+    }
+  }
+}
