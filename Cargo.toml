@@ -11,3 +11,14 @@ simplelog = "0.7.4"
 chrono = "0.4.11"
 serde = { version = "1.0.105", features = ["derive"] }
 jsonwebtoken = "7.1.0"
+
+serde_json = "1.0.50"
+
+
+# install openssl: https://docs.rs/openssl/0.10.28/openssl/
+# Debian and Ubuntu
+# sudo apt-get install pkg-config libssl-dev
+reqwest = { version = "0.10.4", features = ["blocking", "json"] }
+futures = "0.3.4"
+tokio = { version = "0.2", features = ["full"] }
+tokio-util = { version = "0.3.1", features = ["full"] } 

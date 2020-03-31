@@ -2,8 +2,14 @@ mod authentication;
 mod dotenv;
 mod logging;
 
-use log::{debug, error, info};
+mod gcloud;
+
+use log::{debug, error};
 use std::env;
+
+use gcloud::auth::Auth;
+use gcloud::datastore::Datastore;
+// use gcloud::Store;
 
 fn main() {
     logging::init();
@@ -11,17 +17,13 @@ fn main() {
     match env::var("PRIVATE_KEY") {
         Ok(pk) => {
             debug!("KEY: {:?}", &pk[..50]);
-            match authentication::generate_jwt(authentication::Claim::new(), &pk) {
-                Ok(token) => {
-                    info!("Token: {}", &token[..10]);
-                    let mut dotenv = dotenv::Dotenv::new();
-                    dotenv.put(dotenv::KEY_JWT_TOKEN.to_string(), token);
-                    if let Err(msg) = dotenv.write_to_file() {
-                        error!("{}", msg);
-                    }
+            match Auth::create(Auth::JwtToken(""), pk) {
+                Ok(auth) => {
+                    let s = Datastore::new(String::from("goheros-207118"), auth);
+                    s.lookup("heroes".to_owned(), "Protocol".to_owned(), 4851027920551936);
                 }
                 Err(msg) => error!("{}", msg),
-            };
+            }
         }
         Err(msg) => error!("Err by read env PRIVATE_KEY: {}", msg),
     };
