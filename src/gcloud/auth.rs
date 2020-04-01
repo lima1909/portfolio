@@ -39,9 +39,9 @@ impl<'a> Auth<'a> for JwtToken<'a> {
 
 fn jwt_token_login(private_key: &str) -> Result<JwtToken, &'static str> {
     match authentication::generate_jwt(authentication::Claim::new(), private_key) {
-        Ok(jwt_token) => match get_access_token(Box::leak(jwt_token.into_boxed_str())) {
+        Ok(jwt_token) => match get_access_token(Box::leak(jwt_token.clone().into_boxed_str())) {
             Ok(access_token) => Ok(JwtToken {
-                jwt_token: "",
+                jwt_token: Box::leak(jwt_token.clone().into_boxed_str()),
                 access_token: &access_token,
             }),
             Err(msg) => Err(msg),
