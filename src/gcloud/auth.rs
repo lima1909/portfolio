@@ -1,16 +1,7 @@
 use crate::authentication;
-use crate::dotenv;
-use log::error;
 use serde::Deserialize;
 
-#[allow(dead_code)]
-#[derive(Debug)]
-pub enum Auth {
-    ApiKey(&'static str),
-    JwtToken(&'static str),
-}
-
-pub trait MyAuth<'a>: Sized {
+pub trait Auth<'a>: Sized {
     fn to_query_url(&self) -> String;
     fn create(key: &'a str) -> Result<Self, &'static str>;
 }
@@ -20,67 +11,41 @@ pub struct ApiKey<'a> {
     pub key: &'a str,
 }
 
-impl<'a> MyAuth<'a> for ApiKey<'a> {
+impl<'a> Auth<'a> for ApiKey<'a> {
     fn to_query_url(&self) -> String {
         format!("key={}", self.key)
     }
 
-    fn create(key: &'a str) -> Result<ApiKey<'a>, &'static str> {
+    fn create(key: &'a str) -> Result<Self, &'static str> {
         Ok(ApiKey { key: key })
     }
 }
 
 #[derive(Debug)]
 pub struct JwtToken<'a> {
-    jwt_token: &'a str,
+    pub jwt_token: &'a str,
     access_token: &'a str,
 }
 
-impl<'a> MyAuth<'a> for JwtToken<'a> {
+impl<'a> Auth<'a> for JwtToken<'a> {
     fn to_query_url(&self) -> String {
         format!("access_token={}", self.access_token)
     }
 
-    fn create(token: &'a str) -> Result<Self, &'static str> {
-        Ok(JwtToken {
-            jwt_token: token, //Box::leak(token.to_string().into_boxed_str()),
-            access_token: "",
-        })
+    fn create(private_key: &'a str) -> Result<Self, &'static str> {
+        jwt_token_login(private_key)
     }
 }
 
-impl Auth {
-    pub fn to_query_url(&self) -> String {
-        match self {
-            Auth::ApiKey(k) => format!("key={}", k),
-            Auth::JwtToken(t) => format!("access_token={}", t),
-        }
-    }
-
-    pub fn create(kind: Auth, key: String) -> Result<Auth, &'static str> {
-        match kind {
-            Auth::ApiKey(k) => Ok(Auth::ApiKey(k)),
-            Auth::JwtToken(_) => match jwt_token_login(Box::leak(key.into_boxed_str())) {
-                Ok(token) => Ok(Auth::JwtToken(token)),
-                Err(msg) => Err(msg),
-            },
-        }
-    }
-}
-
-fn jwt_token_login(private_key: &'static str) -> Result<&'static str, &'static str> {
+fn jwt_token_login(private_key: &str) -> Result<JwtToken, &'static str> {
     match authentication::generate_jwt(authentication::Claim::new(), private_key) {
-        Ok(token) => {
-            // write to dot-env-file
-            // temporary solution
-            let mut dotenv = dotenv::Dotenv::new();
-            dotenv.put(dotenv::KEY_JWT_TOKEN.to_string(), token.clone());
-            if let Err(msg) = dotenv.write_to_file() {
-                error!("{}", msg);
-            }
-
-            get_access_token(Box::leak(token.into_boxed_str()))
-        }
+        Ok(jwt_token) => match get_access_token(Box::leak(jwt_token.into_boxed_str())) {
+            Ok(access_token) => Ok(JwtToken {
+                jwt_token: "",
+                access_token: &access_token,
+            }),
+            Err(msg) => Err(msg),
+        },
         Err(msg) => Err(Box::leak(msg.into_boxed_str())),
     }
 }

@@ -7,9 +7,9 @@ mod gcloud;
 use log::{debug, error};
 use std::env;
 
-use gcloud::auth::Auth;
+use gcloud::auth::{Auth, JwtToken};
 use gcloud::datastore::Datastore;
-// use gcloud::Store;
+// use crate::dotenv;
 
 fn main() {
     logging::init();
@@ -17,9 +17,21 @@ fn main() {
     match env::var("PRIVATE_KEY") {
         Ok(pk) => {
             debug!("KEY: {:?}", &pk[..50]);
-            match Auth::create(Auth::JwtToken(""), pk) {
+            match JwtToken::create(&pk) {
                 Ok(auth) => {
-                    let s = Datastore::new(String::from("goheros-207118"), auth);
+                    // write to dot-env-file
+                    // temporary solution
+                    let mut dotenv = dotenv::Dotenv::new();
+                    dotenv.put(
+                        dotenv::KEY_JWT_TOKEN.to_string(),
+                        auth.jwt_token.to_string(),
+                    );
+                    if let Err(msg) = dotenv.write_to_file() {
+                        error!("{}", msg);
+                    }
+
+                    // do a lookup to the datastore
+                    let s = Datastore::new(String::from("goheros-207118"), &auth);
                     s.lookup("heroes".to_owned(), "Protocol".to_owned(), 4851027920551936);
                 }
                 Err(msg) => error!("{}", msg),

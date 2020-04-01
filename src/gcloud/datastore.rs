@@ -59,16 +59,16 @@ impl lookup {
     }
 }
 
-pub struct Datastore {
+pub struct Datastore<'a, T: Auth<'a>> {
     project: String,
-    auth: Auth,
+    auth: &'a T,
 }
 
-impl Datastore {
-    // pub fn new(project: String) -> Box<dyn Store> {
-    //     Box::new(Datastore { project: project })
-    // }
-    pub fn new(project: String, auth: Auth) -> Datastore {
+impl<'a, T> Datastore<'a, T>
+where
+    T: Auth<'a>,
+{
+    pub fn new(project: String, auth: &'a T) -> Datastore<'a, T> {
         Datastore {
             project: project,
             auth: auth,
