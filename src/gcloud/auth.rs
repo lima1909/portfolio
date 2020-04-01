@@ -10,6 +10,45 @@ pub enum Auth {
     JwtToken(&'static str),
 }
 
+pub trait MyAuth<'a>: Sized {
+    fn to_query_url(&self) -> String;
+    fn create(key: &'a str) -> Result<Self, &'static str>;
+}
+
+#[derive(Debug)]
+pub struct ApiKey<'a> {
+    pub key: &'a str,
+}
+
+impl<'a> MyAuth<'a> for ApiKey<'a> {
+    fn to_query_url(&self) -> String {
+        format!("key={}", self.key)
+    }
+
+    fn create(key: &'a str) -> Result<ApiKey<'a>, &'static str> {
+        Ok(ApiKey { key: key })
+    }
+}
+
+#[derive(Debug)]
+pub struct JwtToken<'a> {
+    jwt_token: &'a str,
+    access_token: &'a str,
+}
+
+impl<'a> MyAuth<'a> for JwtToken<'a> {
+    fn to_query_url(&self) -> String {
+        format!("access_token={}", self.access_token)
+    }
+
+    fn create(token: &'a str) -> Result<Self, &'static str> {
+        Ok(JwtToken {
+            jwt_token: token, //Box::leak(token.to_string().into_boxed_str()),
+            access_token: "",
+        })
+    }
+}
+
 impl Auth {
     pub fn to_query_url(&self) -> String {
         match self {
