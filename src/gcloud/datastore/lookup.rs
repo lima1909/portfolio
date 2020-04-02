@@ -1,5 +1,6 @@
 use crate::gcloud::auth::Auth;
 use log::info;
+use reqwest::blocking;
 
 const LOOKUP_JSON: &'static str = r#"{
     "readOptions": { "readConsistency": "{readConsistency}" },
@@ -50,33 +51,21 @@ fn lookup_json(namespace: &str, kind: &str, id: &str) -> String {
         .replace("\n", "")
 }
 
-pub struct Datastore<'a, T: Auth<'a>> {
-    project: String,
+pub fn lookup<'a, T: Auth<'a>>(
+    client: blocking::Client,
     auth: &'a T,
-    client: reqwest::blocking::Client,
-}
-
-impl<'a, T> Datastore<'a, T>
-where
-    T: Auth<'a>,
-{
-    pub fn new(project: String, auth: &'a T) -> Datastore<'a, T> {
-        Datastore {
-            project: project,
-            auth: auth,
-            client: reqwest::blocking::Client::new(),
-        }
-    }
-
-    pub fn lookup(self, namespace: &str, kind: &str, id: i128) {
-        let url = format!(
-            "https://datastore.googleapis.com/v1/projects/{}:lookup?{}",
-            self.project,
-            self.auth.to_query_url()
-        );
-        let lookup_json = lookup_json(namespace, kind, &id.to_string());
-        let res = self.client.post(&url).body(lookup_json).send().unwrap();
-        info!("response status-code: {}", res.status());
-        info!("response: {}", &res.text().unwrap()[..50]);
-    }
+    project: &str,
+    namespace: &str,
+    kind: &str,
+    id: i128,
+) {
+    let url = format!(
+        "https://datastore.googleapis.com/v1/projects/{}:lookup?{}",
+        project,
+        auth.to_query_url()
+    );
+    let lookup_json = lookup_json(namespace, kind, &id.to_string());
+    let res = client.post(&url).body(lookup_json).send().unwrap();
+    info!("response status-code: {}", res.status());
+    info!("response: {}", &res.text().unwrap()[..50]);
 }

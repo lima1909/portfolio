@@ -3,13 +3,11 @@ mod dotenv;
 mod logging;
 
 mod gcloud;
+use gcloud::auth::{Auth, JwtToken};
+use gcloud::datastore::Datastore;
 
 use log::{debug, error};
 use std::env;
-
-use gcloud::auth::{Auth, JwtToken};
-use gcloud::datastore::Datastore;
-// use crate::dotenv;
 
 fn main() {
     logging::init();
