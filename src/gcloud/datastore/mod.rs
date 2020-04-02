@@ -1,25 +1,27 @@
 pub mod lookup;
 use crate::gcloud::auth::Auth;
 
+use reqwest::blocking;
+
 pub struct Datastore<'a, T: Auth<'a>> {
-    project: String,
+    project: &'a str,
     auth: &'a T,
-    client: reqwest::blocking::Client,
+    client: blocking::Client,
 }
 
 impl<'a, T> Datastore<'a, T>
 where
     T: Auth<'a>,
 {
-    pub fn new(project: String, auth: &'a T) -> Datastore<'a, T> {
+    pub fn new(project: &'a str, auth: &'a T) -> Datastore<'a, T> {
         Datastore {
             project: project,
             auth: auth,
-            client: reqwest::blocking::Client::new(),
+            client: blocking::Client::new(),
         }
     }
 
     pub fn lookup(self, namespace: &str, kind: &str, id: i128) {
-        lookup::lookup(self.client, self.auth, &self.project, namespace, kind, id)
+        lookup::lookup(self.client, self.auth, self.project, namespace, kind, id)
     }
 }
