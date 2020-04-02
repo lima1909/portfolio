@@ -17,7 +17,7 @@ grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Ajwt-bearer&assertion={{jwt
 
 
 # revoke / invalidate the token
-###
+### ??? do not work currently ???
 GET https://oauth2.googleapis.com/revoke?token={{token}}
 Content-type: application/x-www-form-urlencoded
 
@@ -40,22 +40,22 @@ GET https://storage.googleapis.com/storage/v1/b/goheros-207118.appspot.com/o?fie
 POST https://datastore.googleapis.com/v1/projects/goheros-207118:lookup?access_token={{token}}
 
 {
-  "readOptions": {
-    "readConsistency": "EVENTUAL"
-  },
-  "keys": [
-    {
-      "partitionId": {
-        "namespaceId": "heroes"
-      },
-      "path": [
-        {
-          "kind": "Protocol",
-          "id": "4851027920551936"
-        },
-      ]
+    "readOptions": {
+      "readConsistency": "EVENTUAL"
     },
-  ]
+    "keys": [
+      {
+        "partitionId": {
+          "namespaceId": "heroes"
+        },
+        "path": [
+          {
+            "kind": "Protocol",
+            "id": "4851027920551936"
+          }
+        ]
+      }
+    ]
 }
 
 ###
