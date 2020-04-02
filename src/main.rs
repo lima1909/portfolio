@@ -32,7 +32,7 @@ fn main() {
 
                     // do a lookup to the datastore
                     let s = Datastore::new(String::from("goheros-207118"), &auth);
-                    s.lookup("heroes".to_owned(), "Protocol".to_owned(), 4851027920551936);
+                    s.lookup("heroes", "Protocol", 4851027920551936);
                 }
                 Err(msg) => error!("{}", msg),
             }
