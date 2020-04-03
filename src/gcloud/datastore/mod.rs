@@ -1,6 +1,7 @@
 pub mod lookup;
 use crate::gcloud::auth::Auth;
 
+use http::StatusCode;
 use reqwest::blocking;
 use serde::{Deserialize, Serialize};
 
@@ -37,6 +38,18 @@ pub struct Error {
     pub code: u16,
     pub message: String,
     pub status: String,
+}
+
+impl ResponseError {
+    fn new_internal_server_error(msg: String, status: &str) -> Self {
+        ResponseError {
+            error: Error {
+                code: StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+                message: msg,
+                status: status.to_string(),
+            },
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug)]

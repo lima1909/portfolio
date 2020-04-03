@@ -1,4 +1,4 @@
-use super::{Error, Json, ResponseError};
+use super::{Json, ResponseError};
 use crate::gcloud::auth::Auth;
 use http::StatusCode;
 use reqwest::blocking;
@@ -71,24 +71,18 @@ pub fn lookup<'a, T: Auth<'a>>(
     if res.status().as_u16() == StatusCode::OK.as_u16() {
         match res.text() {
             Ok(json) => Ok(Json { json: json }),
-            Err(msg) => Err(ResponseError {
-                error: Error {
-                    code: StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
-                    message: msg.to_string(),
-                    status: String::from("error read response lookup body"),
-                },
-            }),
+            Err(msg) => Err(ResponseError::new_internal_server_error(
+                msg.to_string(),
+                "error read response lookup body",
+            )),
         }
     } else {
         match res.json::<ResponseError>() {
             Ok(err) => Err(err),
-            Err(msg) => Err(ResponseError {
-                error: Error {
-                    code: StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
-                    message: msg.to_string(),
-                    status: String::from("error by deserialize json-error-result"),
-                },
-            }),
+            Err(msg) => Err(ResponseError::new_internal_server_error(
+                msg.to_string(),
+                "error by deserialize json-error-result",
+            )),
         }
     }
 }
