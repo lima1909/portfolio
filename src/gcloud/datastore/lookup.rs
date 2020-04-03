@@ -1,5 +1,6 @@
+use super::{Error, Json, ResponseError};
 use crate::gcloud::auth::Auth;
-use log::info;
+use http::StatusCode;
 use reqwest::blocking;
 
 const LOOKUP_JSON: &'static str = r#"{
@@ -58,7 +59,7 @@ pub fn lookup<'a, T: Auth<'a>>(
     namespace: &str,
     kind: &str,
     id: i128,
-) {
+) -> Result<Json, ResponseError> {
     let url = format!(
         "https://datastore.googleapis.com/v1/projects/{}:lookup?{}",
         project,
@@ -66,6 +67,28 @@ pub fn lookup<'a, T: Auth<'a>>(
     );
     let lookup_json = lookup_json(namespace, kind, &id.to_string());
     let res = client.post(&url).body(lookup_json).send().unwrap();
-    info!("response status-code: {}", res.status());
-    info!("response: {}", &res.text().unwrap()[..50]);
+
+    if res.status().as_u16() == StatusCode::OK.as_u16() {
+        match res.text() {
+            Ok(json) => Ok(Json { json: json }),
+            Err(msg) => Err(ResponseError {
+                error: Error {
+                    code: StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+                    message: msg.to_string(),
+                    status: String::from("error read response lookup body"),
+                },
+            }),
+        }
+    } else {
+        match res.json::<ResponseError>() {
+            Ok(err) => Err(err),
+            Err(msg) => Err(ResponseError {
+                error: Error {
+                    code: StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+                    message: msg.to_string(),
+                    status: String::from("error by deserialize json-error-result"),
+                },
+            }),
+        }
+    }
 }

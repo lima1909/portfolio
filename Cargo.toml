@@ -19,6 +19,8 @@ serde_json = "1.0.50"
 # Debian and Ubuntu
 # sudo apt-get install pkg-config libssl-dev
 reqwest = { version = "0.10.4", features = ["blocking", "json"] }
+http = "0.2.1"
 futures = "0.3.4"
+
 tokio = { version = "0.2", features = ["full"] }
 tokio-util = { version = "0.3.1", features = ["full"] } 

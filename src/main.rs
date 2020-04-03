@@ -30,7 +30,8 @@ fn main() {
 
                     // do a lookup to the datastore
                     let s = Datastore::new("goheros-207118", &auth);
-                    s.lookup("heroes", "Protocol", 4851027920551936);
+                    let r = s.lookup("heroes", "Protocol", 4851027920551936);
+                    println!("lookup result: \n{:?}", r);
                 }
                 Err(msg) => error!("{}", msg),
             }
