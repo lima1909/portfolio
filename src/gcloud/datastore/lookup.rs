@@ -3,21 +3,6 @@ use crate::gcloud::auth::Auth;
 use http::StatusCode;
 use reqwest::blocking;
 
-const LOOKUP_JSON: &'static str = r#"{
-    "readOptions": { "readConsistency": "{readConsistency}" },
-    "keys": [
-      {
-        "partitionId": { "namespaceId": "{namespace}" },
-        "path": [
-          {
-            "kind": "{kind}",
-            "id": "{id}"
-          }
-        ]
-      }
-    ]
-}"#;
-
 enum ReadConsistency {
     ReadConsistencyUnspecidied,
     Strong,
@@ -42,6 +27,21 @@ impl ReadConsistency {
         }
     }
 }
+
+const LOOKUP_JSON: &'static str = r#"{
+    "readOptions": { "readConsistency": "{readConsistency}" },
+    "keys": [
+      {
+        "partitionId": { "namespaceId": "{namespace}" },
+        "path": [
+          {
+            "kind": "{kind}",
+            "id": "{id}"
+          }
+        ]
+      }
+    ]
+}"#;
 
 fn lookup_json(namespace: &str, kind: &str, id: &str) -> String {
     LOOKUP_JSON
