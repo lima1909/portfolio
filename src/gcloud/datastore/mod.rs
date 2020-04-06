@@ -3,6 +3,7 @@ use crate::gcloud::auth::Auth;
 
 use http::StatusCode;
 use reqwest::blocking;
+use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 
 pub struct Datastore<'a, T: Auth<'a>> {
@@ -23,7 +24,10 @@ where
         }
     }
 
-    pub fn lookup(self, namespace: &str, kind: &str, id: i128) -> Result<Json, ResponseError> {
+    pub fn lookup<D>(self, namespace: &str, kind: &str, id: i128) -> Result<D, ResponseError>
+    where
+        D: DeserializeOwned,
+    {
         lookup::lookup(self.client, self.auth, self.project, namespace, kind, id)
     }
 }
@@ -52,22 +56,22 @@ impl ResponseError {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug)]
-pub struct Json {
-    pub json: String,
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::gcloud::auth::{ApiKey, Auth};
     use http::StatusCode;
+    use serde::{Deserialize, Serialize};
+
+    #[derive(Deserialize, Serialize, Debug)]
+    struct NotUsed {}
 
     #[test]
     fn datastore_lookup_error_unauthorized_401() {
         let a = ApiKey::create("invalid-auth-key").unwrap();
         let s = Datastore::new("project-not-exist", &a);
-        match s.lookup("ns", "kind", 42) {
+        let r: Result<NotUsed, ResponseError> = s.lookup("ns", "kind", 42);
+        match r {
             Err(e) => assert_eq!(StatusCode::UNAUTHORIZED.as_u16(), e.error.code),
             Ok(_) => (),
         }
