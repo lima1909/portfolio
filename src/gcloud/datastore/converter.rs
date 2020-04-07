@@ -53,13 +53,24 @@ pub fn to_object(map: &Value) -> Value {
 pub fn to_value(datatype: &str, val: &str) -> Value {
     match datatype {
         "nullValue" => Value::Null,
-        "doubleValue" => Value::Number(Number::from_f64(val.parse().unwrap()).unwrap()),
+        "doubleValue" => {
+            let v = val.parse().unwrap();
+            let n = Number::from_f64(v).unwrap();
+            Value::Number(n)
+        }
         "integerValue" => {
             let v: isize = val.parse().unwrap();
             Value::Number(Number::from(v))
         }
-        "booleanValue" => Value::Bool(val.parse().unwrap()),
-        _ => Value::String(val.to_string()), // timestampValue | stringValue
+        "booleanValue" => {
+            let v = val.parse().unwrap();
+            Value::Bool(v)
+        }
+        // timestampValue | stringValue
+        _ => {
+            let v = val.to_string();
+            Value::String(v)
+        }
     }
 }
 
