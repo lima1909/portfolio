@@ -32,15 +32,15 @@ where
     //     }
 }
 
+// example:
+// "Name": {"stringValue": "its me"}
+// attr_name (attr): { datatype (dt) : value (v) }
 pub fn to_object(map: &Value) -> Value {
     let mut result_map = Map::new();
-    let m = map.as_object().unwrap();
-    for k in m.keys() {
-        let datatype = m.get(k).unwrap();
-        let dm = datatype.as_object().unwrap();
-        for dk in dm.keys() {
-            let v = dm.get(dk).unwrap();
-            result_map.insert(k.to_string(), to_value(dk, v.as_str().unwrap()));
+    for (attr, dt_v) in map.as_object().unwrap() {
+        for (dt, v) in dt_v.as_object().unwrap() {
+            let to_val = to_value(dt, v.as_str().unwrap());
+            result_map.insert(attr.to_string(), to_val);
         }
     }
     Value::Object(result_map)
