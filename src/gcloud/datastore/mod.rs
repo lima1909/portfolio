@@ -7,6 +7,7 @@ use http::StatusCode;
 use reqwest::blocking;
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
+use serde_json::{self};
 
 pub struct Datastore<'a, T: Auth<'a>> {
     project: &'a str,
@@ -55,6 +56,15 @@ impl ResponseError {
                 status: status.to_string(),
             },
         }
+    }
+}
+
+impl From<serde_json::Error> for ResponseError {
+    fn from(err: serde_json::Error) -> Self {
+        ResponseError::new_internal_server_error(
+            format!("{} (l{} : c{})", err.line(), err.column(), err),
+            format!("JSON_ERROR: ({:?})", err.classify()).as_str(),
+        )
     }
 }
 
