@@ -9,6 +9,7 @@ use gcloud::datastore::{Datastore, ResponseError};
 use log::{debug, error};
 use serde::{Deserialize, Serialize};
 use std::env;
+use std::time::Instant;
 
 #[derive(Deserialize, Serialize, Debug)]
 struct Hero {
@@ -43,9 +44,10 @@ fn main() {
 
                     // do a lookup to the datastore
                     let s = Datastore::new("goheros-207118", &auth);
+                    let now = Instant::now();
                     let r: Result<Hero, ResponseError> =
                         s.lookup("heroes", "Protocol", 4851027920551936);
-                    println!("lookup result: \n{:?}", r);
+                    println!("lookup result ({}ms): \n{:?}", now.elapsed().as_millis(), r);
                 }
                 Err(msg) => error!("{}", msg),
             }
