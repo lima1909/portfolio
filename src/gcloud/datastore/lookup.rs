@@ -47,7 +47,7 @@ const LOOKUP_JSON: &'static str = r#"{
     ]
 }"#;
 
-fn lookup_json(namespace: &str, kind: &str, id: &str) -> String {
+fn create_lookup_json(namespace: &str, kind: &str, id: &str) -> String {
     LOOKUP_JSON
         .replace("{readConsistency}", ReadConsistency::Eventual.to_string())
         .replace("{namespace}", namespace)
@@ -69,7 +69,7 @@ pub fn lookup<'a, D: DeserializeOwned, T: Auth<'a>>(
         project,
         auth.to_query_url()
     );
-    let lookup_json = lookup_json(namespace, kind, &id.to_string());
+    let lookup_json = create_lookup_json(namespace, kind, &id.to_string());
     let res = client.post(&url).body(lookup_json).send().unwrap();
 
     if res.status().as_u16() == StatusCode::OK.as_u16() {
