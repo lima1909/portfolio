@@ -62,7 +62,7 @@ impl ResponseError {
 impl From<serde_json::Error> for ResponseError {
     fn from(err: serde_json::Error) -> Self {
         ResponseError::new_internal_server_error(
-            format!("{} (l{} : c{})", err.line(), err.column(), err),
+            format!("{} (l{} : c{})", err, err.line(), err.column()),
             format!("JSON_ERROR: ({:?})", err.classify()).as_str(),
         )
     }
