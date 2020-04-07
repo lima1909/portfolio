@@ -1,35 +1,37 @@
-use log::error;
+use super::ResponseError;
 use serde::de::DeserializeOwned;
 use serde_json::map::Map;
 use serde_json::{Number, Value};
 
-pub fn convert_result<T>(v: &Value) -> Option<T>
+pub fn convert_result<D>(v: &Value) -> Result<D, ResponseError>
 where
-    T: DeserializeOwned,
+    D: DeserializeOwned,
 {
     match v.get("found") {
         Some(found) => {
-            match found
+            let prop_map = found
                 .get(0)
                 .unwrap()
                 .get("entity")
                 .unwrap()
                 .get("properties")
-            {
-                Some(prop_map) => Some(serde_json::from_value(to_object(prop_map)).unwrap()),
-                _ => {
-                    error!("invalid value type");
-                    None
-                }
-            }
+                .unwrap();
+
+            let v = to_object(prop_map);
+            Ok(serde_json::from_value(v).unwrap())
         }
-        None => None,
+        None => Err(ResponseError::new_internal_server_error(
+            "blub".to_string(),
+            "error read response lookup body",
+        )),
     }
 
-    //     match v.get("missing") {
-    //         Some(missing) => println!("\nfound:\n {:?} \n", missing),
-    //         None => (),
-    //     }
+    // if let Some(missing) = v.get("missing") {
+    //     Err(ResponseError::new_internal_server_error(
+    //         "".to_string(),
+    //         "error read response lookup body",
+    //     ))
+    // }
 }
 
 // example:
