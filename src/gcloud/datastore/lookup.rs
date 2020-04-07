@@ -1,11 +1,10 @@
+use super::converter::convert_result;
 use super::ResponseError;
 use crate::gcloud::auth::Auth;
 use http::StatusCode;
-use log::error;
 use reqwest::blocking;
 use serde::de::DeserializeOwned;
-use serde_json::map::Map;
-use serde_json::{Number, Value};
+use serde_json::Value;
 
 enum ReadConsistency {
     ReadConsistencyUnspecidied,
@@ -88,64 +87,5 @@ pub fn lookup<'a, D: DeserializeOwned, T: Auth<'a>>(
                 "error by deserialize json-error-result",
             )),
         }
-    }
-}
-
-fn convert_result<T>(v: &Value) -> Option<T>
-where
-    T: DeserializeOwned,
-{
-    match v.get("found") {
-        Some(found) => {
-            match found
-                .get(0)
-                .unwrap()
-                .get("entity")
-                .unwrap()
-                .get("properties")
-            {
-                Some(prop_map) => Some(serde_json::from_value(to_object(prop_map)).unwrap()),
-                _ => {
-                    error!("invalid value type");
-                    None
-                }
-            }
-        }
-        None => None,
-    }
-
-    //     match v.get("missing") {
-    //         Some(missing) => println!("\nfound:\n {:?} \n", missing),
-    //         None => (),
-    //     }
-}
-
-fn to_object(map: &Value) -> Value {
-    let mut result_map = Map::new();
-    let m = map.as_object().unwrap();
-    for k in m.keys() {
-        let datatype = m.get(k).unwrap();
-        let dm = datatype.as_object().unwrap();
-        for dk in dm.keys() {
-            let v = dm.get(dk).unwrap();
-            result_map.insert(k.to_string(), to_value(v.as_str().unwrap(), dk));
-        }
-    }
-    Value::Object(result_map)
-}
-
-// still missing datatypes:
-// https://cloud.google.com/datastore/docs/reference/data/rest/v1/projects/runQuery#Value
-//
-fn to_value(val: &str, datatype: &str) -> Value {
-    match datatype {
-        "nullValue" => Value::Null,
-        "doubleValue" => Value::Number(Number::from_f64(val.parse().unwrap()).unwrap()),
-        "integerValue" => {
-            let v: isize = val.parse().unwrap();
-            Value::Number(Number::from(v))
-        }
-        "booleanValue" => Value::Bool(val.parse().unwrap()),
-        _ => Value::String(val.to_string()), // timestampValue | stringValue
     }
 }
