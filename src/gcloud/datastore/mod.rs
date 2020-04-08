@@ -83,8 +83,8 @@ mod tests {
     #[test]
     fn datastore_lookup_error_unauthorized_401() {
         let a = ApiKey::create("invalid-auth-key").unwrap();
-        let q = Box::leak(a.to_query_url().clone().into_boxed_str());
-        let s = Datastore::new("project-not-exist", q);
+        let q = a.to_query_url();
+        let s = Datastore::new("project-not-exist", &q);
         let r: Result<NotUsed, ResponseError> = s.lookup("ns", "kind", 42);
         match r {
             Err(e) => assert_eq!(StatusCode::UNAUTHORIZED.as_u16(), e.error.code),

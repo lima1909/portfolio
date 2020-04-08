@@ -43,8 +43,8 @@ fn main() {
                     }
 
                     // do a lookup to the datastore
-                    let q = Box::leak(auth.to_query_url().clone().into_boxed_str());
-                    let s = Datastore::new("goheros-207118", q);
+                    let q = auth.to_query_url();
+                    let s = Datastore::new("goheros-207118", &q);
                     let now = Instant::now();
                     let r: Result<Hero, ResponseError> =
                         s.lookup("heroes", "Protocol", 4851027920551936);
