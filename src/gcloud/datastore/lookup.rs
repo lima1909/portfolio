@@ -73,12 +73,6 @@ pub fn lookup<D: DeserializeOwned>(
         let v = res.json::<Value>().unwrap();
         return Ok(deserialize_result(&v)?);
     } else {
-        match res.json::<ResponseError>() {
-            Ok(err) => Err(err),
-            Err(msg) => Err(ResponseError::new_internal_server_error(
-                msg.to_string(),
-                "error by deserialize json-error-result",
-            )),
-        }
+        Err(res.json()?)
     }
 }

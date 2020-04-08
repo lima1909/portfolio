@@ -3,6 +3,7 @@ pub mod lookup;
 
 use http::StatusCode;
 use reqwest::blocking;
+use reqwest::{self};
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use serde_json::{self};
@@ -67,6 +68,23 @@ impl From<serde_json::Error> for ResponseError {
             format!("{} (l{} : c{})", err, err.line(), err.column()),
             format!("JSON_ERROR: ({:?})", err.classify()).as_str(),
         )
+    }
+}
+
+impl From<reqwest::Error> for ResponseError {
+    fn from(err: reqwest::Error) -> Self {
+        let status = match err.status() {
+            Some(s) => s.as_u16(),
+            None => StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+        };
+
+        ResponseError {
+            error: Error {
+                code: status,
+                message: format!("{} (url: {})", err, err.url().unwrap()),
+                status: status.to_string(),
+            },
+        }
     }
 }
 
