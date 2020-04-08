@@ -1,6 +1,5 @@
 use super::converter::deserialize_result;
 use super::ResponseError;
-use crate::gcloud::auth::Auth;
 use http::StatusCode;
 use reqwest::blocking;
 use serde::de::DeserializeOwned;
@@ -55,9 +54,9 @@ fn create_lookup_json(namespace: &str, kind: &str, id: &str) -> String {
         .replace("\n", "")
 }
 
-pub fn lookup<'a, D: DeserializeOwned, T: Auth<'a>>(
-    client: blocking::Client,
-    auth: &'a T,
+pub fn lookup<D: DeserializeOwned>(
+    client: &blocking::Client,
+    auth_query_str: &str,
     project: &str,
     namespace: &str,
     kind: &str,
@@ -65,8 +64,7 @@ pub fn lookup<'a, D: DeserializeOwned, T: Auth<'a>>(
 ) -> Result<D, ResponseError> {
     let url = format!(
         "https://datastore.googleapis.com/v1/projects/{}:lookup?{}",
-        project,
-        auth.to_query_url()
+        project, auth_query_str
     );
     let lookup_json = create_lookup_json(namespace, kind, &id.to_string());
     let res = client.post(&url).body(lookup_json).send().unwrap();

@@ -43,10 +43,16 @@ fn main() {
                     }
 
                     // do a lookup to the datastore
-                    let s = Datastore::new("goheros-207118", &auth);
+                    let q = Box::leak(auth.to_query_url().clone().into_boxed_str());
+                    let s = Datastore::new("goheros-207118", q);
                     let now = Instant::now();
                     let r: Result<Hero, ResponseError> =
                         s.lookup("heroes", "Protocol", 4851027920551936);
+                    println!("lookup result ({}ms): \n{:?}", now.elapsed().as_millis(), r);
+
+                    let now = Instant::now();
+                    let r: Result<Hero, ResponseError> =
+                        s.lookup("heroes", "Protocol", 5066702320566272);
                     println!("lookup result ({}ms): \n{:?}", now.elapsed().as_millis(), r);
                 }
                 Err(msg) => error!("{}", msg),
