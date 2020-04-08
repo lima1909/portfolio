@@ -3,7 +3,7 @@ use serde::de::DeserializeOwned;
 use serde_json::map::Map;
 use serde_json::{Number, Value};
 
-pub fn convert_result<D>(v: &Value) -> Result<D, ResponseError>
+pub fn deserialize_result<D>(v: &Value) -> Result<D, ResponseError>
 where
     D: DeserializeOwned,
 {
@@ -17,12 +17,12 @@ where
             .unwrap();
 
         let v = to_object(prop_map);
-        return Ok(serde_json::from_value(v).unwrap());
+        return Ok(serde_json::from_value(v)?);
     };
 
     if let Some(missing) = v.get("missing") {
         return Err(ResponseError::new_internal_server_error(
-            format!("result missing is not implemented: {}", missing).to_string(),
+            format!("result 'missing' is not implemented: {}", missing).to_string(),
             "error read response lookup body",
         ));
     };
@@ -78,6 +78,7 @@ pub fn to_value(datatype: &str, val: &str) -> Value {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use serde::{Deserialize, Serialize};
 
     #[test]
     fn test_to_value() {
@@ -107,5 +108,31 @@ mod tests {
         map.insert(String::from("HeroID"), Value::Number(Number::from(42)));
         map.insert(String::from("Action"), Value::String("List".to_string()));
         assert_eq!(Value::Object(map), result);
+    }
+
+    #[derive(Deserialize, Serialize, Debug)]
+    struct Hero {
+        #[serde(rename(deserialize = "HeroID"))]
+        hero_id: isize,
+        #[serde(rename(deserialize = "Action"))]
+        action: String,
+        #[serde(rename(deserialize = "Time"))]
+        time: String,
+    }
+
+    #[test]
+    fn test_deserialize_result() {
+        let json: &'static str = r#"{ "found": [ { "entity": {
+        "properties": {
+            "HeroID": { "integerValue": "0" },
+            "Action": { "stringValue": "List" },    
+            "Time": { "timestampValue": "2018-07-27T20:13:20Z" }
+        } } } ] }"#;
+
+        let result_value: Value = serde_json::from_str(json).unwrap();
+        let hero: Hero = deserialize_result(&result_value).unwrap();
+        assert_eq!(0, hero.hero_id);
+        assert_eq!("List", hero.action);
+        assert_eq!("2018-07-27T20:13:20Z", hero.time);
     }
 }

@@ -1,4 +1,4 @@
-use super::converter::convert_result;
+use super::converter::deserialize_result;
 use super::ResponseError;
 use crate::gcloud::auth::Auth;
 use http::StatusCode;
@@ -72,13 +72,8 @@ pub fn lookup<'a, D: DeserializeOwned, T: Auth<'a>>(
     let res = client.post(&url).body(lookup_json).send().unwrap();
 
     if res.status().as_u16() == StatusCode::OK.as_u16() {
-        match res.json::<Value>() {
-            Ok(v) => Ok(convert_result(&v).unwrap()),
-            Err(msg) => Err(ResponseError::new_internal_server_error(
-                msg.to_string(),
-                "error read response lookup body",
-            )),
-        }
+        let v = res.json::<Value>().unwrap();
+        return Ok(deserialize_result(&v)?);
     } else {
         match res.json::<ResponseError>() {
             Ok(err) => Err(err),
