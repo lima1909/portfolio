@@ -88,6 +88,44 @@ impl From<reqwest::Error> for ResponseError {
     }
 }
 
+#[derive(Deserialize, Serialize, Debug)]
+pub struct Entity {
+    key: Key,
+}
+
+#[derive(Deserialize, Serialize, Debug)]
+pub struct Key {
+    #[serde(rename(deserialize = "partitionId"))]
+    partition_id: PartitionId,
+    path: Vec<Path>,
+}
+
+#[derive(Deserialize, Serialize, Debug)]
+pub struct PartitionId {
+    #[serde(rename(deserialize = "projectId"))]
+    project_id: String,
+    #[serde(rename(deserialize = "namespaceId"))]
+    namespace_id: String,
+}
+
+#[derive(Deserialize, Serialize, Debug)]
+pub struct Path {
+    kind: String,
+    id: String,
+}
+
+impl Entity {
+    fn to_string(self) -> String {
+        format!(
+            "project: {} namespace {} kind: {}, id: {}",
+            self.key.partition_id.project_id,
+            self.key.partition_id.namespace_id,
+            self.key.path.get(0).unwrap().kind,
+            self.key.path.get(0).unwrap().id
+        )
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

@@ -1,4 +1,5 @@
-use super::ResponseError;
+use super::{Entity, Error, ResponseError};
+use http::StatusCode;
 use serde::de::DeserializeOwned;
 use serde_json::map::Map;
 use serde_json::{Number, Value};
@@ -21,12 +22,18 @@ where
     };
 
     if let Some(missing) = v.get("missing") {
-        return Err(ResponseError::new_internal_server_error(
-            format!("result 'missing' is not implemented: {}", missing).to_string(),
-            "error read response lookup body",
-        ));
+        let e: Entity =
+            serde_json::from_value(missing.get(0).unwrap().get("entity").unwrap().clone())?;
+        return Err(ResponseError {
+            error: Error {
+                code: StatusCode::NOT_FOUND.as_u16(),
+                message: format!("result is missing: {}", e.to_string()),
+                status: "NOT_FOUND".to_string(),
+            },
+        });
     };
 
+    // this must be: deferred
     Err(ResponseError::new_internal_server_error(
         format!("invalid result: {}", v).to_string(),
         "error read response lookup body",
