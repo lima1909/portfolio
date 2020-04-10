@@ -67,12 +67,12 @@ pub fn lookup<D: DeserializeOwned>(
         project, auth_query_str
     );
     let lookup_json = create_lookup_json(namespace, kind, &id.to_string());
-    let res = client.post(&url).body(lookup_json).send().unwrap();
+    let resp = client.post(&url).body(lookup_json).send()?;
 
-    if res.status().as_u16() == StatusCode::OK.as_u16() {
-        let v = res.json::<Value>().unwrap();
+    if resp.status().as_u16() == StatusCode::OK.as_u16() {
+        let v = resp.json::<Value>().unwrap();
         return Ok(deserialize_result(&v)?);
     } else {
-        Err(res.json()?)
+        Err(resp.json()?)
     }
 }

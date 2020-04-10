@@ -78,10 +78,14 @@ impl From<reqwest::Error> for ResponseError {
             None => StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
         };
 
+        let mut url = "no url available";
+        if let Some(u) = err.url() {
+            url = u.as_str();
+        }
         ResponseError {
             error: Error {
                 code: status,
-                message: format!("{} (url: {})", err, err.url().unwrap()),
+                message: format!("{} (url: {})", err, url),
                 status: status.to_string(),
             },
         }
