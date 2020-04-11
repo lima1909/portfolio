@@ -130,7 +130,7 @@ impl Entity {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::gcloud::auth::{ApiKey, Auth};
+    use crate::gcloud::auth::{ApiKey, Auth, JwtToken};
     use http::StatusCode;
     use serde::{Deserialize, Serialize};
 
@@ -147,5 +147,41 @@ mod tests {
             Err(e) => assert_eq!(StatusCode::UNAUTHORIZED.as_u16(), e.code),
             Ok(_) => (),
         }
+    }
+
+    #[derive(Deserialize, Serialize, Debug)]
+    struct Hero {
+        #[serde(rename(deserialize = "HeroID"))]
+        hero_id: isize,
+        #[serde(rename(deserialize = "Note"))]
+        note: String,
+        #[serde(rename(deserialize = "Action"))]
+        action: String,
+        #[serde(rename(deserialize = "Time"))]
+        time: String,
+    }
+
+    #[test]
+    fn datastore_lookup_found() {
+        let a = JwtToken::from_env_private_key().unwrap();
+        let q = a.to_query_url();
+        let s = Datastore::new("goheros-207118", &q);
+        let r: Result<Hero, Error> = s.lookup("heroes", "Protocol", 5066702320566272);
+        assert!(r.is_ok());
+        let hero: Hero = r.unwrap();
+        assert_eq!(2, hero.hero_id);
+        assert_eq!("GetByID", hero.action);
+    }
+
+    #[test]
+    fn datastore_lookup_missing() {
+        let a = JwtToken::from_env_private_key().unwrap();
+        let q = a.to_query_url();
+        let s = Datastore::new("goheros-207118", &q);
+        let r: Result<Hero, Error> = s.lookup("heroes", "Protocol", 42);
+        assert!(r.is_err());
+        let err: Error = r.unwrap_err();
+        assert_eq!(404, err.code);
+        assert_eq!("Not Found", err.status);
     }
 }
