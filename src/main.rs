@@ -4,7 +4,7 @@ mod logging;
 
 mod gcloud;
 use gcloud::auth::{Auth, JwtToken};
-use gcloud::datastore::{Datastore, ResponseError};
+use gcloud::datastore::{Datastore, Error};
 
 use log::{debug, error};
 use serde::{Deserialize, Serialize};
@@ -46,13 +46,11 @@ fn main() {
                     let q = auth.to_query_url();
                     let s = Datastore::new("goheros-207118", &q);
                     let now = Instant::now();
-                    let r: Result<Hero, ResponseError> =
-                        s.lookup("heroes", "Protocol", 4851027920551936);
+                    let r: Result<Hero, Error> = s.lookup("heroes", "Protocol", 4851027920551936);
                     println!("lookup result ({}ms): \n{:?}", now.elapsed().as_millis(), r);
 
                     let now = Instant::now();
-                    let r: Result<Hero, ResponseError> =
-                        s.lookup("heroes", "Protocol", 5066702320566272);
+                    let r: Result<Hero, Error> = s.lookup("heroes", "Protocol", 5066702320566272);
                     println!("lookup result ({}ms): \n{:?}", now.elapsed().as_millis(), r);
                 }
                 Err(msg) => error!("{}", msg),

@@ -23,7 +23,7 @@ impl<'a> Datastore<'a> {
         }
     }
 
-    pub fn lookup<D>(&self, namespace: &str, kind: &str, id: i128) -> Result<D, ResponseError>
+    pub fn lookup<D>(&self, namespace: &str, kind: &str, id: i128) -> Result<D, Error>
     where
         D: DeserializeOwned,
     {
@@ -39,8 +39,8 @@ impl<'a> Datastore<'a> {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct ResponseError {
-    pub error: Error,
+struct ResponseError {
+    error: Error,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -50,44 +50,41 @@ pub struct Error {
     pub status: String,
 }
 
-impl ResponseError {
-    fn new_internal_server_error(msg: String, status: &str) -> Self {
-        ResponseError {
-            error: Error {
-                code: StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
-                message: msg,
-                status: status.to_string(),
-            },
+impl Error {
+    fn new(status_code: StatusCode, msg: String) -> Self {
+        Error {
+            code: status_code.as_u16(),
+            message: msg,
+            status: status_code.canonical_reason().unwrap().to_string(),
         }
     }
 }
 
-impl From<serde_json::Error> for ResponseError {
+impl From<serde_json::Error> for Error {
     fn from(err: serde_json::Error) -> Self {
-        ResponseError::new_internal_server_error(
-            format!("{} (l{} : c{})", err, err.line(), err.column()),
-            format!("JSON_ERROR: ({:?})", err.classify()).as_str(),
+        Error::new(
+            StatusCode::INTERNAL_SERVER_ERROR,
+            format!("JSON_ERROR: {} (l{} : c{})", err, err.line(), err.column()),
         )
     }
 }
 
-impl From<reqwest::Error> for ResponseError {
+impl From<reqwest::Error> for Error {
     fn from(err: reqwest::Error) -> Self {
         let status = match err.status() {
             Some(s) => s.as_u16(),
             None => StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
         };
 
-        let mut url = "no url available";
-        if let Some(u) = err.url() {
-            url = u.as_str();
-        }
-        ResponseError {
-            error: Error {
-                code: status,
-                message: format!("{} (url: {})", err, url),
-                status: status.to_string(),
-            },
+        let url = match err.url() {
+            Some(u) => u.as_str(),
+            None => "no url available",
+        };
+
+        Error {
+            code: status,
+            message: format!("{} (url: {})", err, url),
+            status: status.to_string(),
         }
     }
 }
@@ -145,9 +142,9 @@ mod tests {
         let a = ApiKey::create("invalid-auth-key").unwrap();
         let q = a.to_query_url();
         let s = Datastore::new("project-not-exist", &q);
-        let r: Result<NotUsed, ResponseError> = s.lookup("ns", "kind", 42);
+        let r: Result<NotUsed, Error> = s.lookup("ns", "kind", 42);
         match r {
-            Err(e) => assert_eq!(StatusCode::UNAUTHORIZED.as_u16(), e.error.code),
+            Err(e) => assert_eq!(StatusCode::UNAUTHORIZED.as_u16(), e.code),
             Ok(_) => (),
         }
     }
