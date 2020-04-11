@@ -1,5 +1,10 @@
 use crate::authentication;
+use log::debug;
 use serde::Deserialize;
+
+use std::env;
+
+const PRIVATE_KEY: &'static str = "PRIVATE_KEY";
 
 pub trait Auth<'a>: Sized {
     fn to_query_url(&self) -> String;
@@ -34,6 +39,21 @@ impl<'a> Auth<'a> for JwtToken<'a> {
 
     fn create(private_key: &'a str) -> Result<Self, &'static str> {
         jwt_token_login(private_key)
+    }
+}
+
+impl<'a> JwtToken<'a> {
+    pub fn from_env_private_key() -> Result<Self, &'static str> {
+        match env::var(PRIVATE_KEY) {
+            Ok(pk) => {
+                debug!("{}: {:?}", PRIVATE_KEY, &pk[..50]);
+                jwt_token_login(Box::leak(pk.into_boxed_str()))
+            }
+            Err(msg) => {
+                let err_msg = format!("could not read env {}: {}", PRIVATE_KEY, msg);
+                Err(Box::leak(err_msg.into_boxed_str()))
+            }
+        }
     }
 }
 
