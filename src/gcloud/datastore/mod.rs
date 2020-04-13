@@ -38,7 +38,7 @@ impl<'a> Datastore<'a> {
         )
     }
 
-    pub fn query<D>(&self, namespace: &str, kind: &str) -> Result<D, Error>
+    pub fn query<D>(&self, namespace: &str, kind: &str) -> Result<Vec<D>, Error>
     where
         D: DeserializeOwned,
     {

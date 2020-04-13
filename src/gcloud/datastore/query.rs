@@ -58,7 +58,7 @@ pub fn query<D: DeserializeOwned>(
   project: &str,
   namespace: &str,
   kind: &str,
-) -> Result<D, Error> {
+) -> Result<Vec<D>, Error> {
   let url = format!(
     "https://datastore.googleapis.com/v1/projects/{}:runQuery?{}",
     project, auth_query_str

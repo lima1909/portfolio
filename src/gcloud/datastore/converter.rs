@@ -37,7 +37,7 @@ where
     ))
 }
 
-pub fn deserialize_query_result<D>(v: &Value) -> Result<D, Error>
+pub fn deserialize_query_result<D>(v: &Value) -> Result<Vec<D>, Error>
 where
     D: DeserializeOwned,
 {
