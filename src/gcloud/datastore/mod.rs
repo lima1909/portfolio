@@ -2,6 +2,8 @@ pub mod converter;
 pub mod lookup;
 pub mod query;
 
+use query::Filter;
+
 use http::StatusCode;
 use reqwest::blocking;
 use reqwest::{self};
@@ -38,7 +40,7 @@ impl<'a> Datastore<'a> {
         )
     }
 
-    pub fn query<D>(&self, namespace: &str, kind: &str) -> Result<Vec<D>, Error>
+    pub fn query<D>(&self, namespace: &str, kind: &str, filter: &Filter) -> Result<Vec<D>, Error>
     where
         D: DeserializeOwned,
     {
@@ -48,6 +50,7 @@ impl<'a> Datastore<'a> {
             &self.project,
             namespace,
             kind,
+            filter,
         )
     }
 }

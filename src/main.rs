@@ -4,6 +4,7 @@ mod logging;
 
 mod gcloud;
 use gcloud::auth::{Auth, JwtToken};
+use gcloud::datastore::query::{Filter, Operator, Value};
 use gcloud::datastore::{Datastore, Error};
 
 use log::error;
@@ -50,7 +51,12 @@ fn main() {
             println!("lookup result ({}ms): \n{:?}", now.elapsed().as_millis(), r);
 
             let now = Instant::now();
-            let r: Result<Vec<Hero>, Error> = s.query("heroes", "Protocol");
+            let filter = Filter {
+                property: "Action",
+                op: Operator::Equal,
+                value: Value::String(String::from("Delete")),
+            };
+            let r: Result<Vec<Hero>, Error> = s.query("heroes", "Protocol", &filter);
             println!(
                 "query result: {} ({}ms): \n",
                 r.unwrap().len(),
