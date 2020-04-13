@@ -1,5 +1,6 @@
 pub mod converter;
 pub mod lookup;
+pub mod query;
 
 use http::StatusCode;
 use reqwest::blocking;
@@ -35,6 +36,44 @@ impl<'a> Datastore<'a> {
             kind,
             id,
         )
+    }
+
+    pub fn query<D>(&self, namespace: &str, kind: &str) -> Result<D, Error>
+    where
+        D: DeserializeOwned,
+    {
+        query::query(
+            &self.client,
+            &self.auth_query_str,
+            &self.project,
+            namespace,
+            kind,
+        )
+    }
+}
+
+enum ReadConsistency {
+    ReadConsistencyUnspecidied,
+    Strong,
+    Eventual,
+}
+
+impl ReadConsistency {
+    #[allow(dead_code)]
+    fn from_string(from: &str) -> Self {
+        match from {
+            "READ_CONSISTENCY_UNSPECIFIED" => ReadConsistency::ReadConsistencyUnspecidied,
+            "STRONG" => ReadConsistency::Strong,
+            _ => ReadConsistency::Eventual,
+        }
+    }
+
+    fn to_string(&self) -> &str {
+        match self {
+            ReadConsistency::ReadConsistencyUnspecidied => "READ_CONSISTENCY_UNSPECIFIED",
+            ReadConsistency::Strong => "STRONG",
+            ReadConsistency::Eventual => "EVENTUAL",
+        }
     }
 }
 

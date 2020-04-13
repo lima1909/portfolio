@@ -79,7 +79,7 @@ POST https://datastore.googleapis.com/v1/projects/goheros-207118:runQuery?access
           },
           "op" : "EQUAL",
           "value": {
-            "stringValue":"List",
+            "stringValue":"Delete",
           },
       }
     }

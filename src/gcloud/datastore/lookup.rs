@@ -1,34 +1,9 @@
-use super::converter::deserialize_result;
-use super::{Error, ResponseError};
+use super::converter::deserialize_lookup_result;
+use super::{Error, ReadConsistency, ResponseError};
 use http::StatusCode;
 use reqwest::blocking;
 use serde::de::DeserializeOwned;
 use serde_json::Value;
-
-enum ReadConsistency {
-    ReadConsistencyUnspecidied,
-    Strong,
-    Eventual,
-}
-
-impl ReadConsistency {
-    #[allow(dead_code)]
-    fn from_string(from: &str) -> Self {
-        match from {
-            "READ_CONSISTENCY_UNSPECIFIED" => ReadConsistency::ReadConsistencyUnspecidied,
-            "STRONG" => ReadConsistency::Strong,
-            _ => ReadConsistency::Eventual,
-        }
-    }
-
-    fn to_string(&self) -> &str {
-        match self {
-            ReadConsistency::ReadConsistencyUnspecidied => "READ_CONSISTENCY_UNSPECIFIED",
-            ReadConsistency::Strong => "STRONG",
-            ReadConsistency::Eventual => "EVENTUAL",
-        }
-    }
-}
 
 const LOOKUP_JSON: &'static str = r#"{
     "readOptions": { "readConsistency": "{readConsistency}" },
@@ -71,7 +46,7 @@ pub fn lookup<D: DeserializeOwned>(
 
     if resp.status().as_u16() == StatusCode::OK.as_u16() {
         let v = resp.json::<Value>().unwrap();
-        return Ok(deserialize_result(&v)?);
+        return Ok(deserialize_lookup_result(&v)?);
     } else {
         Err(resp.json::<ResponseError>()?.error)
     }

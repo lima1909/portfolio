@@ -48,6 +48,14 @@ fn main() {
             let now = Instant::now();
             let r: Result<Hero, Error> = s.lookup("heroes", "Protocol", 5066702320566272);
             println!("lookup result ({}ms): \n{:?}", now.elapsed().as_millis(), r);
+
+            let now = Instant::now();
+            let r: Result<Vec<Hero>, Error> = s.query("heroes", "Protocol");
+            println!(
+                "query result: {} ({}ms): \n",
+                r.unwrap().len(),
+                now.elapsed().as_millis()
+            );
         }
         Err(msg) => error!("{}", msg),
     };

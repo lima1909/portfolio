@@ -4,7 +4,7 @@ use serde::de::DeserializeOwned;
 use serde_json::map::Map;
 use serde_json::{Number, Value};
 
-pub fn deserialize_result<D>(v: &Value) -> Result<D, Error>
+pub fn deserialize_lookup_result<D>(v: &Value) -> Result<D, Error>
 where
     D: DeserializeOwned,
 {
@@ -33,7 +33,31 @@ where
     // this must be: deferred
     Err(Error::new(
         StatusCode::INTERNAL_SERVER_ERROR,
-        format!("could not deserialize_result, invalid result: {}", v).to_string(),
+        format!("could not deserialize lookup result, invalid result: {}", v).to_string(),
+    ))
+}
+
+pub fn deserialize_query_result<D>(v: &Value) -> Result<D, Error>
+where
+    D: DeserializeOwned,
+{
+    if let Some(batch) = v.get("batch") {
+        let results = batch.get("entityResults").unwrap().as_array().unwrap();
+        let mut return_vec = Vec::<Value>::with_capacity(results.len());
+        for r in results {
+            let prop_map = r.get("entity").unwrap().get("properties").unwrap();
+            return_vec.push(to_object(prop_map));
+        }
+        let return_arr = Value::Array(return_vec);
+        return Ok(serde_json::from_value(return_arr)?);
+    };
+
+    Err(Error::new(
+        StatusCode::INTERNAL_SERVER_ERROR,
+        format!(
+            "could not deserialize qurey result, expect 'batch' and not: {:?}",
+            v.get(0)
+        ),
     ))
 }
 
@@ -125,18 +149,62 @@ mod tests {
     }
 
     #[test]
-    fn test_deserialize_result() {
+    fn test_deserialize_lookup_result() {
         let json: &'static str = r#"{ "found": [ { "entity": {
         "properties": {
             "HeroID": { "integerValue": "0" },
-            "Action": { "stringValue": "List" },    
+            "Action": { "stringValue": "List" },
             "Time": { "timestampValue": "2018-07-27T20:13:20Z" }
         } } } ] }"#;
 
         let result_value: Value = serde_json::from_str(json).unwrap();
-        let hero: Hero = deserialize_result(&result_value).unwrap();
+        let hero: Hero = deserialize_lookup_result(&result_value).unwrap();
         assert_eq!(0, hero.hero_id);
         assert_eq!("List", hero.action);
         assert_eq!("2018-07-27T20:13:20Z", hero.time);
+    }
+
+    #[test]
+    fn test_deserialize_query_result() {
+        let json: &'static str = r#"{ "batch": {
+            "entityResultType": "FULL",
+            "entityResults": [
+              {
+                "entity": {
+                  "key": { "partitionId": { "projectId": "goheros-207118", "namespaceId": "heroes" },
+                    "path": [ { "kind": "Protocol", "id": "5647341163905024" } ]
+                  },
+                  "properties": {
+                    "Time": { "timestampValue": "2018-09-02T18:51:06Z" },
+                    "HeroID": { "integerValue": "8"},
+                    "Note": { "stringValue": "Delete Hero: &{8 {\n    \"name\": \"Foo-Bar\",\n} {  }} with ID: 8"},
+                    "Action": {"stringValue": "Delete"}
+                  }
+                },
+                "cursor": "CjgSMmoQZX5nb2hlcm9zLTIwNzExOHIVCxIIUHJvdG9jb2wYgICAoKGHhAoMogEGaGVyb2VzGAAgAA==", "version": "1535914685236000"
+              },
+              {
+                "entity": {
+                  "key": { "partitionId": { "projectId": "goheros-207118", "namespaceId": "heroes" },
+                    "path": [ { "kind": "Protocol", "id": "5693417237512192" } ]
+                  },
+                  "properties": {
+                    "Time": { "timestampValue": "2018-09-02T18:51:40Z" },
+                    "HeroID": { "integerValue": "10" },
+                    "Note": { "stringValue": "Delete Hero: &{10 {\n    \"New Foo-Bar2\"\n} {  }} with ID: 10" },
+                    "Action": { "stringValue": "Delete" }
+                  }
+                },
+                "cursor": "CjgSMmoQZX5nb2hlcm9zLTIwNzExOHIVCxIIUHJvdG9jb2wYgICAgKDEjgoMogEGaGVyb2VzGAAgAA==", "version": "1535914683774000" }
+            ],
+            "endCursor": "CjgSMmoQZX5nb2hlcm9zLTIwNzExOHIVCxIIUHJvdG9jb2wYgICAgKCSnwoMogEGaGVyb2VzGAAgAA==",
+            "moreResults": "NO_MORE_RESULTS"
+          } }"#;
+
+        let result_value: Value = serde_json::from_str(json).unwrap();
+        let heros: Vec<Hero> = deserialize_query_result(&result_value).unwrap();
+        assert_eq!(2, heros.len());
+        assert_eq!("2018-09-02T18:51:06Z", heros.get(0).unwrap().time);
+        assert_eq!("Delete", heros.get(1).unwrap().action);
     }
 }
