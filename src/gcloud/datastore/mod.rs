@@ -1,3 +1,4 @@
+pub mod commit;
 pub mod converter;
 pub mod lookup;
 pub mod query;
@@ -52,6 +53,10 @@ impl<'a> Datastore<'a> {
             kind,
             filter,
         )
+    }
+
+    pub fn commit(&self, _namespace: &str, _kind: &str) -> Result<String, Error> {
+        commit::commit(&self.client, &self.auth_query_str, &self.project)
     }
 }
 

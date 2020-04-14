@@ -62,6 +62,14 @@ fn main() {
                 r.unwrap().len(),
                 now.elapsed().as_millis()
             );
+
+            let now = Instant::now();
+            let r: Result<String, Error> = s.commit("heroes", "Rust-Test");
+            println!(
+                "commit result: {:?} ({}ms): \n",
+                r,
+                now.elapsed().as_millis()
+            );
         }
         Err(msg) => error!("{}", msg),
     };

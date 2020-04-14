@@ -85,3 +85,7 @@ POST https://datastore.googleapis.com/v1/projects/goheros-207118:runQuery?access
     }
   }
 }
+
+# get transaction, is the basis for commit (insert, update, ...)
+###
+POST https://datastore.googleapis.com/v1/projects/goheros-207118:beginTransaction?access_token={{token}}
