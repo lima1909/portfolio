@@ -88,4 +88,34 @@ POST https://datastore.googleapis.com/v1/projects/goheros-207118:runQuery?access
 
 # get transaction, is the basis for commit (insert, update, ...)
 ###
+# @name get_transaction
 POST https://datastore.googleapis.com/v1/projects/goheros-207118:beginTransaction?access_token={{token}}
+
+{}
+
+@transaction = {{get_transaction.response.body.transaction}}
+
+###
+POST https://datastore.googleapis.com/v1/projects/goheros-207118:commit?access_token={{token}}
+
+{
+  "mode": "TRANSACTIONAL",
+  "mutations": [
+    {
+      "insert": {
+        "key": {
+          "partitionId": {
+            "projectId": "goheros-207118",
+            "namespaceId": "heroes",
+            },
+          "path": [ { "kind": "Rust-Test"} ]
+        },
+        "properties": {
+          "IsTrue": { "booleanValue": true  },
+          "Name": { "stringValue"   : "Yeh" }
+        }
+      }
+    }
+  ],
+  "transaction": "{{transaction}}",
+}
