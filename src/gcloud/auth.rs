@@ -1,4 +1,4 @@
-use crate::gcloud::datastore::Error;
+use crate::gcloud::Error;
 
 use log::debug;
 use serde::Serialize;

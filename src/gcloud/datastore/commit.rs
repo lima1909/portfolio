@@ -1,4 +1,4 @@
-use super::{Error, ResponseError};
+use crate::gcloud::{Error, ResponseError};
 
 use http::StatusCode;
 use reqwest::blocking;

@@ -1,5 +1,7 @@
+use crate::gcloud::{Error, ResponseError};
+
 use super::converter::deserialize_query_result;
-use super::{Error, ReadConsistency, ResponseError};
+use super::ReadConsistency;
 use http::StatusCode;
 use reqwest::blocking;
 use serde::de::DeserializeOwned;

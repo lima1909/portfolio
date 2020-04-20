@@ -5,7 +5,8 @@ mod logging;
 mod gcloud;
 use gcloud::auth::{Auth, JwtToken};
 use gcloud::datastore::query::{Filter, Operator, Value};
-use gcloud::datastore::{Datastore, Error};
+use gcloud::datastore::Datastore;
+use gcloud::Error;
 
 use log::error;
 use serde::{Deserialize, Serialize};
