@@ -40,7 +40,7 @@ fn main() {
             }
 
             // do a lookup to the datastore
-            let q = auth.to_query_url();
+            let q = auth.to_url_query();
             let s = Datastore::new("goheros-207118", &q);
             let now = Instant::now();
             let r: Result<Hero, Error> = s.lookup("heroes", "Protocol", 4851027920551936);

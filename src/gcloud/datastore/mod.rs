@@ -107,6 +107,12 @@ impl Error {
     }
 }
 
+impl Into<String> for Error {
+    fn into(self) -> String {
+        format!("{} ({})", self.message, self.code)
+    }
+}
+
 impl From<serde_json::Error> for Error {
     fn from(err: serde_json::Error) -> Self {
         Error::new(
@@ -186,8 +192,8 @@ mod tests {
 
     #[test]
     fn datastore_lookup_error_unauthorized_401() {
-        let a = ApiKey::create("invalid-auth-key").unwrap();
-        let q = a.to_query_url();
+        let a = ApiKey::new("invalid-auth-key");
+        let q = a.to_url_query();
         let s = Datastore::new("project-not-exist", &q);
         let r: Result<NotUsed, Error> = s.lookup("ns", "kind", 42);
         match r {
@@ -211,7 +217,7 @@ mod tests {
     #[test]
     fn datastore_lookup_found() {
         let a = JwtToken::from_env_private_key().unwrap();
-        let q = a.to_query_url();
+        let q = a.to_url_query();
         let s = Datastore::new("goheros-207118", &q);
         let r: Result<Hero, Error> = s.lookup("heroes", "Protocol", 5066702320566272);
         assert!(r.is_ok());
@@ -223,7 +229,7 @@ mod tests {
     #[test]
     fn datastore_lookup_missing() {
         let a = JwtToken::from_env_private_key().unwrap();
-        let q = a.to_query_url();
+        let q = a.to_url_query();
         let s = Datastore::new("goheros-207118", &q);
         let r: Result<Hero, Error> = s.lookup("heroes", "Protocol", 42);
         assert!(r.is_err());
