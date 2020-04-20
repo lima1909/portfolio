@@ -26,7 +26,7 @@ struct Hero {
 fn main() {
     logging::init();
 
-    match JwtToken::from_env_private_key() {
+    match JwtToken::from_env_private_key(authentication::Claim::new()) {
         Ok(auth) => {
             // write to dot-env-file
             // temporary solution

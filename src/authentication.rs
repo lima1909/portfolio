@@ -1,5 +1,4 @@
 use chrono::prelude::*;
-use jsonwebtoken;
 use serde::{Deserialize, Serialize};
 
 const URL_AUTH: &'static str = "https://oauth2.googleapis.com/token";
@@ -34,21 +33,5 @@ impl Claim {
             iat: Utc::now().timestamp(),
             exp: Utc::now().timestamp() + chrono::Duration::minutes(1).num_seconds(),
         }
-    }
-}
-
-pub fn generate_jwt(claim: Claim, private_key: &str) -> Result<String, String> {
-    match jsonwebtoken::EncodingKey::from_rsa_pem(private_key.as_bytes()) {
-        Ok(pk) => {
-            match jsonwebtoken::encode(
-                &jsonwebtoken::Header::new(jsonwebtoken::Algorithm::RS256),
-                &claim,
-                &pk,
-            ) {
-                Ok(token) => Ok(token),
-                Err(msg) => Err(format!("err by create jwt-token: {}", msg)),
-            }
-        }
-        Err(msg) => Err(format!("err by read private key: {}", msg)),
     }
 }

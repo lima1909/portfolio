@@ -183,6 +183,7 @@ impl Entity {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::authentication::Claim;
     use crate::gcloud::auth::{ApiKey, Auth, JwtToken};
     use http::StatusCode;
     use serde::{Deserialize, Serialize};
@@ -216,7 +217,7 @@ mod tests {
 
     #[test]
     fn datastore_lookup_found() {
-        let a = JwtToken::from_env_private_key().unwrap();
+        let a = JwtToken::from_env_private_key(Claim::new()).unwrap();
         let q = a.to_url_query();
         let s = Datastore::new("goheros-207118", &q);
         let r: Result<Hero, Error> = s.lookup("heroes", "Protocol", 5066702320566272);
@@ -228,7 +229,7 @@ mod tests {
 
     #[test]
     fn datastore_lookup_missing() {
-        let a = JwtToken::from_env_private_key().unwrap();
+        let a = JwtToken::from_env_private_key(Claim::new()).unwrap();
         let q = a.to_url_query();
         let s = Datastore::new("goheros-207118", &q);
         let r: Result<Hero, Error> = s.lookup("heroes", "Protocol", 42);

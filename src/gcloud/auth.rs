@@ -1,7 +1,7 @@
-use crate::authentication;
 use crate::gcloud::datastore::Error;
 
 use log::debug;
+use serde::Serialize;
 use serde_json::Value;
 
 use std::env;
@@ -54,11 +54,11 @@ where
 }
 
 impl JwtToken<String> {
-    pub fn from_env_private_key() -> Result<JwtToken<String>, String> {
+    pub fn from_env_private_key<T: Serialize>(claim: T) -> Result<JwtToken<String>, String> {
         match env::var(ENV_PRIVATE_KEY) {
             Ok(pk) => {
                 debug!("{}: {:?}", ENV_PRIVATE_KEY, &pk[..50]);
-                jwt_token_login(&pk)
+                jwt_token_login(&pk, claim)
             }
             Err(msg) => {
                 let err_msg = format!("could not read env {}: {}", ENV_PRIVATE_KEY, msg);
@@ -68,8 +68,11 @@ impl JwtToken<String> {
     }
 }
 
-fn jwt_token_login(private_key: impl AsRef<str>) -> Result<JwtToken<String>, String> {
-    match authentication::generate_jwt(authentication::Claim::new(), private_key.as_ref()) {
+fn jwt_token_login<T: Serialize>(
+    private_key: impl AsRef<str>,
+    claim: T,
+) -> Result<JwtToken<String>, String> {
+    match create_jwt_token(claim, private_key.as_ref()) {
         Ok(jwt_token) => match get_access_token(&jwt_token) {
             Ok(access_token) => Ok(JwtToken {
                 jwt_token: Box::leak(jwt_token.into_boxed_str()),
@@ -95,4 +98,20 @@ fn get_access_token(jwt_token: impl AsRef<str>) -> Result<String, Error> {
     let v: Value = json_resp.json()?;
     let s = v.get("access_token").unwrap().as_str().unwrap();
     Ok(s.to_string())
+}
+
+pub fn create_jwt_token<T: Serialize>(claim: T, private_key: &str) -> Result<String, String> {
+    match jsonwebtoken::EncodingKey::from_rsa_pem(private_key.as_bytes()) {
+        Ok(pk) => {
+            match jsonwebtoken::encode(
+                &jsonwebtoken::Header::new(jsonwebtoken::Algorithm::RS256),
+                &claim,
+                &pk,
+            ) {
+                Ok(token) => Ok(token),
+                Err(msg) => Err(format!("err by create jwt-token: {}", msg)),
+            }
+        }
+        Err(msg) => Err(format!("err by read private key: {}", msg)),
+    }
 }
