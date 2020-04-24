@@ -27,13 +27,13 @@ where
     }
 
     fn new(key: T) -> Self {
-        ApiKey { key: key }
+        Self { key }
     }
 }
 
 #[derive(Debug)]
 pub struct JwtToken<T: AsRef<str>> {
-    pub jwt_token: &'static str,
+    pub jwt_token: String,
     access_token: T,
 }
 
@@ -46,9 +46,9 @@ where
     }
 
     fn new(access_token: T) -> Self {
-        JwtToken {
-            jwt_token: "",
-            access_token: access_token,
+        Self {
+            jwt_token: String::new(),
+            access_token,
         }
     }
 }
@@ -75,7 +75,7 @@ fn jwt_token_login<T: Serialize>(
     match create_jwt_token(claim, private_key.as_ref()) {
         Ok(jwt_token) => match get_access_token(&jwt_token) {
             Ok(access_token) => Ok(JwtToken {
-                jwt_token: Box::leak(jwt_token.into_boxed_str()),
+                jwt_token: jwt_token,
                 access_token: access_token,
             }),
             Err(err) => Err(err.into()),
